@@ -49,24 +49,28 @@ const callStudentProxy = async (prompt, systemInstruction = '', modelKey = 'flas
  * 1. Generar recetas inteligentes basadas en la despensa
  */
 const generateSmartRecipes = async (pantryItems, preferences = {}) => {
-  const systemInstruction = 'Sos el chef ejecutivo de Loop Kitchen. Genera recetas detalladas en JSON conciso.';
+  const systemInstruction = 'Sos el chef ejecutivo de Loop Kitchen. Genera 2 recetas cortas en JSON de tamaño mínimo para evitar truncación.';
 
   const prompt = `
-Ingredientes disponibles en despensa: ${JSON.stringify(pantryItems)}
-Genera 3 recetas variadas y explicadas paso a paso en JSON:
+Ingredientes: ${JSON.stringify(pantryItems)}
+Genera exactamente 2 recetas ultra compactas en JSON.
+IMPORTANTE:
+- "description": Frase de máximo 8 palabras.
+- "ingredients": Incluir máximo 4 ingredientes por receta.
+- "steps": Máximo 2 pasos muy cortos (máximo 12 palabras por paso).
+- "healthyVariants" y "tips": Omitir o dejar vacíos para ahorrar espacio.
+Formato JSON exacto:
 [
   {
-    "title": "Nombre de receta",
-    "description": "Descripción apetitosa",
-    "prepTimeMinutes": 20,
+    "title": "Nombre",
+    "description": "Corto",
+    "prepTimeMinutes": 15,
     "difficulty": "Fácil",
     "ingredients": [
       { "name": "Ingrediente", "quantity": 100, "unit": "g", "inPantry": true }
     ],
-    "steps": ["Paso 1: Cortar...", "Paso 2: Cocinar...", "Paso 3: Servir..."],
-    "nutritionalInfo": { "calories": 420, "protein": 30, "carbs": 25, "fats": 12 },
-    "healthyVariants": ["Variante saludable"],
-    "tips": ["Consejo culinario práctico"]
+    "steps": ["Paso 1", "Paso 2"],
+    "nutritionalInfo": { "calories": 300, "protein": 20, "carbs": 10, "fats": 5 }
   }
 ]
 `;
@@ -156,79 +160,61 @@ JSON requerido:
  * 3. Asistente de Planificación Semanal IA ⭐ (7 Días Variados con Receta Completa)
  */
 const generateWeeklyMealPlan = async (preferences = {}) => {
-  const systemInstruction = 'Nutricionista y Chef Ejecutivo de Loop Kitchen. Tu misión es generar un plan de 7 Días (Lunes a Domingo) COMPLETAMENTE DIVERSO, sin repetir recetas entre días, y con instrucciones claras paso a paso para cada comida.';
+  const systemInstruction = 'Nutricionista y Chef de Loop Kitchen. Genera un menú de 3 días (Lunes a Miércoles) en JSON minificado.';
 
   const prompt = `
-Genera un Plan Semanal de 7 Días (Lunes a Domingo) DIVERSO Y VARIADO para ${preferences.householdSize || 2} personas.
-IMPORTANTE: Cada día debe tener platillos distintos para Desayuno, Almuerzo, Merienda y Cena.
+Genera un plan de 3 Días (Lunes, Martes, Miércoles) en JSON de tamaño mínimo para evitar truncación.
+IMPORTANTE:
+- "description": Máximo 2 palabras.
+- "ingredients": Máximo 1 ingrediente por comida (incluyendo solo "name", "quantity" y "unit", omitir el campo "category").
+- "steps": Dejar como array vacío [] para todas las comidas.
+- "healthyTip": Dejar como string vacío "".
 
-Estructura JSON compacta pero detallada:
+Formato JSON exacto:
 {
-  "title": "Plan Semanal Culinario Variado",
+  "title": "Plan 3 Dias",
   "days": [
     {
       "dayName": "Lunes",
       "breakfast": {
-        "title": "Tostadas de Palta y Huevo",
-        "description": "Desayuno fresco y proteico.",
-        "prepTimeMinutes": 10,
-        "ingredients": [
-          { "name": "Pan Integral", "quantity": 2, "unit": "rebanadas", "category": "Granos" },
-          { "name": "Huevo", "quantity": 2, "unit": "unid", "category": "Proteínas" },
-          { "name": "Palta", "quantity": 1, "unit": "unid", "category": "Verduras" }
-        ],
-        "steps": [
-          "Tostar las rebanadas de pan integral.",
-          "Cocinar los huevos a la plancha o escalfados.",
-          "Moler la palta con sal y montar sobre el tostado con el huevo encima."
-        ],
-        "healthyTip": "Añadir semillas de chía o sésamo por encima."
-      },
-      "lunch": {
-        "title": "Pollo al Limón con Quinoa y Brócoli",
-        "description": "Almuerzo equilibrado rico en proteínas.",
-        "prepTimeMinutes": 25,
-        "ingredients": [
-          { "name": "Pechuga de Pollo", "quantity": 200, "unit": "g", "category": "Proteínas" },
-          { "name": "Quinoa", "quantity": 80, "unit": "g", "category": "Granos" },
-          { "name": "Brócoli", "quantity": 150, "unit": "g", "category": "Verduras" }
-        ],
-        "steps": [
-          "Cocinar la quinoa en agua hirviendo durante 15 minutos.",
-          "Dorar la pechuga de pollo a la plancha con jugo de limón fresco.",
-          "Cocinar el brócoli al vapor por 5 minutos y emplatar todo junto."
-        ],
-        "healthyTip": "Usar aceite de oliva virgen extra en crudo."
-      },
-      "snack": {
-        "title": "Yogurt Griego con Arándanos y Almendras",
-        "description": "Merienda saciante.",
+        "title": "Avena",
+        "description": "Desayuno",
         "prepTimeMinutes": 5,
         "ingredients": [
-          { "name": "Yogurt Griego", "quantity": 150, "unit": "g", "category": "Lácteos" },
-          { "name": "Arándanos", "quantity": 50, "unit": "g", "category": "Frutas" },
-          { "name": "Almendras", "quantity": 20, unit: "g", "category": "Frutos Secos" }
+          { "name": "Avena", "quantity": 50, "unit": "g" }
         ],
-        "steps": [
-          "Colocar el yogurt griego en un bowl.",
-          "Añadir arándanos frescos y almendras fileteadas."
+        "steps": [],
+        "healthyTip": ""
+      },
+      "lunch": {
+        "title": "Pollo",
+        "description": "Almuerzo",
+        "prepTimeMinutes": 10,
+        "ingredients": [
+          { "name": "Pollo", "quantity": 150, "unit": "g" }
         ],
-        "healthyTip": "Evitar yogures con azúcares añadidos."
+        "steps": [],
+        "healthyTip": ""
+      },
+      "snack": {
+        "title": "Fruta",
+        "description": "Merienda",
+        "prepTimeMinutes": 5,
+        "ingredients": [
+          { "name": "Manzana", "quantity": 1, "unit": "unid" }
+        ],
+        "steps": [],
+        "healthyTip": ""
       },
       "dinner": {
-        "title": "Fillete de Pescado con Ensalada Mix",
-        "description": "Cena ligera rica en Omega 3.",
-        "prepTimeMinutes": 20,
+        "title": "Sopa",
+        "description": "Cena",
+        "prepTimeMinutes": 15,
         "ingredients": [
-          { "name": "Fillete de Pescado", "quantity": 200, "unit": "g", "category": "Proteínas" },
-          { "name": "Ensalada Verde", "quantity": 150, "unit": "g", "category": "Verduras" }
+          { "name": "Tomate", "quantity": 2, "unit": "unid" }
         ],
-        "steps": [
-          "Sazonar el pescado con ajo y sal.",
-          "Cocinar a la plancha 4 minutos por lado.",
-          "Mezclar hojas verdes con un toque de aceite de oliva y servir."
-        ],
-        "healthyTip": "Cenar 2 horas antes de ir a dormir."
+        "steps": [],
+        "healthyTip": ""
       }
     }
   ]

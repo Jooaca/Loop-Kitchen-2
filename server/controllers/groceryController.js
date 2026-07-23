@@ -1,4 +1,6 @@
 const GroceryList = require('../models/GroceryList');
+const Pantry = require('../models/Pantry');
+const pantryController = require('./pantryController');
 
 const inMemoryGrocery = new Map();
 
@@ -69,14 +71,61 @@ const toggleBoughtItem = async (req, res) => {
       list = await GroceryList.findOne({ user: req.user.id, status: 'active' });
       if (list) {
         const item = list.items.id(itemId);
-        if (item) item.isBought = !item.isBought;
-        await list.save();
+        if (item) {
+          item.isBought = !item.isBought;
+          if (item.isBought) {
+            // Add to MongoDB Pantry
+            let pantry = await Pantry.findOne({ user: req.user.id });
+            if (!pantry) {
+              pantry = new Pantry({ user: req.user.id, items: [] });
+            }
+            const existingIndex = pantry.items.findIndex(
+              pi => pi.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+            );
+            if (existingIndex > -1) {
+              pantry.items[existingIndex].quantity += (Number(item.quantity) || 1);
+            } else {
+              pantry.items.push({
+                name: item.name.trim(),
+                category: item.category || 'General',
+                quantity: Number(item.quantity) || 1,
+                unit: item.unit || 'unid',
+                updatedAt: new Date()
+              });
+            }
+            await pantry.save();
+          }
+          await list.save();
+        }
       }
     } catch (e) {
       list = inMemoryGrocery.get(req.user.id);
       if (list) {
         const item = list.items.find(i => i._id === itemId);
-        if (item) item.isBought = !item.isBought;
+        if (item) {
+          item.isBought = !item.isBought;
+          if (item.isBought) {
+            // Add to in-memory pantry
+            if (pantryController.inMemoryPantries) {
+              if (!pantryController.inMemoryPantries.has(req.user.id)) {
+                pantryController.inMemoryPantries.set(req.user.id, []);
+              }
+              const pList = pantryController.inMemoryPantries.get(req.user.id);
+              const existing = pList.find(pi => pi.name.toLowerCase().trim() === item.name.toLowerCase().trim());
+              if (existing) {
+                existing.quantity += (Number(item.quantity) || 1);
+              } else {
+                pList.push({
+                  _id: 'p_' + Date.now(),
+                  name: item.name.trim(),
+                  category: item.category || 'General',
+                  quantity: Number(item.quantity) || 1,
+                  unit: item.unit || 'unid'
+                });
+              }
+            }
+          }
+        }
       }
     }
     res.json({ success: true, groceryList: list });

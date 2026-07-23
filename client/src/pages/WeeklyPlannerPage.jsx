@@ -70,6 +70,20 @@ export const WeeklyPlannerPage = () => {
     setSelectedRecipe(null);
   };
 
+  const handleCookRecipe = async (recipe) => {
+    try {
+      const res = await api.useIngredients(recipe.ingredients);
+      if (res.success) {
+        addToast('¡Receta cocinada! Se descontaron los ingredientes de tu despensa.', 'success');
+        handleCloseRecipeModal();
+      } else {
+        addToast(res.message || 'Error al cocinar', 'error');
+      }
+    } catch (error) {
+      addToast('Error al conectar con la despensa', 'error');
+    }
+  };
+
   return (
     <div style={{ padding: '20px 16px' }} className="animate-fade-in">
       {/* Title & Badge Header */}
@@ -332,16 +346,23 @@ export const WeeklyPlannerPage = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
+              <button
+                onClick={() => handleCookRecipe(selectedRecipe)}
+                className="btn-brutal"
+                style={{ flex: 1, minWidth: '120px', padding: '10px', fontSize: '0.85rem', backgroundColor: 'var(--color-lime)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+              >
+                🍳 Cocinar
+              </button>
               <button
                 onClick={() => {
                   addToast('¡Receta guardada en favoritos!', 'success');
                   handleCloseRecipeModal();
                 }}
-                className="btn-brutal"
-                style={{ flex: 1, padding: '10px', fontSize: '0.85rem' }}
+                className="btn-brutal btn-secondary"
+                style={{ flex: 1, minWidth: '100px', padding: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
               >
-                <Heart size={16} /> Guardar
+                <Heart size={14} /> Guardar
               </button>
               <button onClick={handleCloseRecipeModal} className="btn-brutal btn-secondary" style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
                 Cerrar

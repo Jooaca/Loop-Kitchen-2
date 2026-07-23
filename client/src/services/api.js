@@ -69,6 +69,15 @@ export const api = {
     return res.json();
   },
 
+  useIngredients: async (ingredients) => {
+    const res = await fetch(`${API_BASE_URL}/pantry/use-ingredients`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ ingredients }),
+    });
+    return res.json();
+  },
+
   // Grocery
   getGroceryList: async () => {
     const res = await fetch(`${API_BASE_URL}/grocery`, {

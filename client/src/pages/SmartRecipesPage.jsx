@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -6,11 +7,32 @@ import { SkeletonCard } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
 
 export const SmartRecipesPage = () => {
-  const [ingredients, setIngredients] = useState(['pollo', 'tomate', 'cebolla', 'arroz', 'queso']);
+  const [ingredients, setIngredients] = useState([]);
   const [newIngredient, setNewIngredient] = useState('');
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingPantry, setLoadingPantry] = useState(true);
   const { addToast } = useToast();
+
+  useEffect(() => {
+    const fetchPantry = async () => {
+      try {
+        const res = await api.getPantry();
+        if (res.success && res.pantry) {
+          if (res.pantry.length > 0) {
+            setIngredients(res.pantry.map(i => i.name.toLowerCase()));
+          } else {
+            setIngredients(['pollo', 'tomate', 'cebolla', 'arroz', 'queso']);
+          }
+        }
+      } catch (err) {
+        addToast('No se pudo cargar la despensa.', 'error');
+      } finally {
+        setLoadingPantry(false);
+      }
+    };
+    fetchPantry();
+  }, []);
 
   const handleAddIngredient = (e) => {
     e.preventDefault();
@@ -43,6 +65,21 @@ export const SmartRecipesPage = () => {
       addToast('Error de comunicación con el servidor', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCookRecipe = async (recipe) => {
+    try {
+      const res = await api.useIngredients(recipe.ingredients);
+      if (res.success) {
+        addToast('¡Receta cocinada! Se descontaron los ingredientes de tu despensa.', 'success');
+        const names = res.pantry.map(i => i.name.toLowerCase());
+        setIngredients(names);
+      } else {
+        addToast(res.message || 'Error al cocinar', 'error');
+      }
+    } catch (error) {
+      addToast('Error de comunicación al cocinar', 'error');
     }
   };
 
@@ -180,13 +217,22 @@ export const SmartRecipesPage = () => {
                   )}
                 </div>
 
-                <button
-                  onClick={() => addToast('¡Receta guardada en tus favoritos!', 'success')}
-                  className="btn-brutal btn-secondary"
-                  style={{ width: '100%', marginTop: '12px' }}
-                >
-                  <Heart size={16} /> Guardar en Favoritos
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', width: '100%' }}>
+                  <button
+                    onClick={() => handleCookRecipe(recipe)}
+                    className="btn-brutal"
+                    style={{ width: '100%', backgroundColor: 'var(--color-lime)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  >
+                    🍳 Cocinar Receta
+                  </button>
+                  <button
+                    onClick={() => addToast('¡Receta guardada en tus favoritos!', 'success')}
+                    className="btn-brutal btn-secondary"
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  >
+                    <Heart size={16} /> Guardar en Favoritos
+                  </button>
+                </div>
               </div>
             ))}
           </div>

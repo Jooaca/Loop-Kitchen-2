@@ -121,4 +121,53 @@ const deletePantryItem = async (req, res) => {
   }
 };
 
-module.exports = { getPantry, addPantryItem, deletePantryItem };
+const useIngredients = async (req, res) => {
+  try {
+    const { ingredients } = req.body;
+    if (!ingredients || !Array.isArray(ingredients)) {
+      return res.status(400).json({ success: false, message: 'Faltan los ingredientes a descontar.' });
+    }
+
+    let items = [];
+    try {
+      let pantry = await Pantry.findOne({ user: req.user.id });
+      if (pantry) {
+        ingredients.forEach(useItem => {
+          const idx = pantry.items.findIndex(
+            pi => pi.name.toLowerCase().trim() === useItem.name.toLowerCase().trim()
+          );
+          if (idx > -1) {
+            pantry.items[idx].quantity -= (Number(useItem.quantity) || 0);
+            if (pantry.items[idx].quantity <= 0) {
+              pantry.items.splice(idx, 1);
+            }
+          }
+        });
+        await pantry.save();
+        items = pantry.items;
+      }
+    } catch (e) {
+      if (inMemoryPantries.has(req.user.id)) {
+        const list = inMemoryPantries.get(req.user.id);
+        ingredients.forEach(useItem => {
+          const idx = list.findIndex(
+            pi => pi.name.toLowerCase().trim() === useItem.name.toLowerCase().trim()
+          );
+          if (idx > -1) {
+            list[idx].quantity -= (Number(useItem.quantity) || 0);
+            if (list[idx].quantity <= 0) {
+              list.splice(idx, 1);
+            }
+          }
+        });
+        items = list;
+      }
+    }
+
+    res.json({ success: true, message: 'Ingredientes utilizados y descontados de la despensa.', pantry: items });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al descontar ingredientes de la despensa.' });
+  }
+};
+
+module.exports = { getPantry, addPantryItem, deletePantryItem, useIngredients, inMemoryPantries };

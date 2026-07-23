@@ -6,22 +6,36 @@ const AiHistory = require('../models/AiHistory');
 
 const inMemoryHistory = [];
 
-// @desc Generate smart recipes based on pantry
-// @route POST /api/ai/recipes
 const getSmartRecipes = async (req, res) => {
   try {
     let pantryItems = [];
-    try {
-      const pantry = await Pantry.findOne({ user: req.user.id });
-      pantryItems = pantry ? pantry.items : [];
-    } catch (e) {
-      pantryItems = [
-        { name: 'Pollo', quantity: 1, unit: 'kg' },
-        { name: 'Tomate', quantity: 4, unit: 'unid' },
-        { name: 'Cebolla', quantity: 2, unit: 'unid' },
-        { name: 'Arroz', quantity: 1, unit: 'kg' },
-        { name: 'Queso', quantity: 200, unit: 'g' }
-      ];
+    const customPantry = req.body.preferences?.customPantry;
+
+    if (customPantry && Array.isArray(customPantry)) {
+      pantryItems = customPantry.map(item => {
+        if (typeof item === 'string') {
+          return { name: item, quantity: 1, unit: 'unid' };
+        }
+        return item;
+      });
+    } else {
+      try {
+        const pantry = await Pantry.findOne({ user: req.user.id });
+        pantryItems = pantry ? pantry.items : [];
+      } catch (e) {
+        const pantryController = require('./pantryController');
+        if (pantryController.inMemoryPantries && pantryController.inMemoryPantries.has(req.user.id)) {
+          pantryItems = pantryController.inMemoryPantries.get(req.user.id);
+        } else {
+          pantryItems = [
+            { name: 'Pollo', quantity: 1, unit: 'kg' },
+            { name: 'Tomate', quantity: 4, unit: 'unid' },
+            { name: 'Cebolla', quantity: 2, unit: 'unid' },
+            { name: 'Arroz', quantity: 1, unit: 'kg' },
+            { name: 'Queso', quantity: 200, unit: 'g' }
+          ];
+        }
+      }
     }
 
     const recipes = await geminiService.generateSmartRecipes(pantryItems, req.body.preferences || {});
