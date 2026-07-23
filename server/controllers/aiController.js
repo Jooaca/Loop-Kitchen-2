@@ -5,6 +5,7 @@ const MealPlan = require('../models/MealPlan');
 const AiHistory = require('../models/AiHistory');
 
 const inMemoryHistory = [];
+const inMemoryMealPlans = new Map();
 
 const getSmartRecipes = async (req, res) => {
   try {
@@ -129,6 +130,7 @@ const generateWeeklyPlan = async (req, res) => {
       });
     } catch (e) {
       // In-memory fallback
+      inMemoryMealPlans.set(req.user.id, newPlan);
     }
 
     try {
@@ -195,10 +197,53 @@ const getAiHistory = async (req, res) => {
   }
 };
 
+// @desc Get active weekly meal plan
+// @route GET /api/ai/weekly-planner
+const getActiveMealPlan = async (req, res) => {
+  try {
+    let plan;
+    try {
+      plan = await MealPlan.findOne({ user: req.user.id, isActive: true });
+    } catch (e) {
+      plan = inMemoryMealPlans.get(req.user.id) || null;
+    }
+    res.json({ success: true, mealPlan: plan });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al obtener el plan semanal.' });
+  }
+};
+
+// @desc Save/update active weekly meal plan
+// @route POST /api/ai/weekly-planner/save
+const saveActiveMealPlan = async (req, res) => {
+  try {
+    const { mealPlan } = req.body;
+    let savedPlan = mealPlan;
+    try {
+      await MealPlan.updateMany({ user: req.user.id }, { isActive: false });
+      mealPlan.user = req.user.id;
+      mealPlan.isActive = true;
+      if (mealPlan._id && (mealPlan._id.startsWith('mp_') || mealPlan._id.startsWith('p_'))) {
+        delete mealPlan._id;
+      }
+      savedPlan = await MealPlan.create(mealPlan);
+    } catch (e) {
+      mealPlan.isActive = true;
+      inMemoryMealPlans.set(req.user.id, mealPlan);
+      savedPlan = mealPlan;
+    }
+    res.json({ success: true, mealPlan: savedPlan });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al guardar el plan semanal.' });
+  }
+};
+
 module.exports = {
   getSmartRecipes,
   optimizeActiveCart,
   generateWeeklyPlan,
   generateGroceryFromPlan,
-  getAiHistory
+  getAiHistory,
+  getActiveMealPlan,
+  saveActiveMealPlan
 };

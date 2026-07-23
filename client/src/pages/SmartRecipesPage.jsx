@@ -7,22 +7,48 @@ import { SkeletonCard } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
 
 export const SmartRecipesPage = () => {
-  const [ingredients, setIngredients] = useState([]);
+  const [ingredients, setIngredients] = useState(() => {
+    const saved = localStorage.getItem('loop_smart_ingredients');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [newIngredient, setNewIngredient] = useState('');
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState(() => {
+    const saved = localStorage.getItem('loop_smart_recipes');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [loading, setLoading] = useState(false);
   const [loadingPantry, setLoadingPantry] = useState(true);
   const { addToast } = useToast();
 
+  const [showAddToPlannerModal, setShowAddToPlannerModal] = useState(false);
+  const [selectedRecipeForPlan, setSelectedRecipeForPlan] = useState(null);
+  const [targetDay, setTargetDay] = useState('Lunes');
+  const [targetMeal, setTargetMeal] = useState('breakfast');
+
+  useEffect(() => {
+    if (ingredients.length > 0) {
+      localStorage.setItem('loop_smart_ingredients', JSON.stringify(ingredients));
+    }
+  }, [ingredients]);
+
+  useEffect(() => {
+    if (recipes.length > 0) {
+      localStorage.setItem('loop_smart_recipes', JSON.stringify(recipes));
+    }
+  }, [recipes]);
+
   useEffect(() => {
     const fetchPantry = async () => {
       try {
-        const res = await api.getPantry();
-        if (res.success && res.pantry) {
-          if (res.pantry.length > 0) {
-            setIngredients(res.pantry.map(i => i.name.toLowerCase()));
-          } else {
-            setIngredients(['pollo', 'tomate', 'cebolla', 'arroz', 'queso']);
+        const saved = localStorage.getItem('loop_smart_ingredients');
+        if (!saved || JSON.parse(saved).length === 0) {
+          const res = await api.getPantry();
+          if (res.success && res.pantry) {
+            if (res.pantry.length > 0) {
+              setIngredients(res.pantry.map(i => i.name.toLowerCase()));
+            } else {
+              setIngredients(['pollo', 'tomate', 'cebolla', 'arroz', 'queso']);
+            }
           }
         }
       } catch (err) {
@@ -80,6 +106,93 @@ export const SmartRecipesPage = () => {
       }
     } catch (error) {
       addToast('Error de comunicación al cocinar', 'error');
+    }
+  };
+
+  const handleAddToPlannerConfirm = async () => {
+    if (!selectedRecipeForPlan) return;
+    try {
+      let plan = null;
+      try {
+        const res = await api.getActiveMealPlan();
+        if (res.success && res.mealPlan) {
+          plan = res.mealPlan;
+        }
+      } catch (err) {
+        // network error
+      }
+
+      if (!plan) {
+        const saved = localStorage.getItem('loop_weekly_plan');
+        if (saved) {
+          plan = JSON.parse(saved);
+        }
+      }
+
+      const emptyMeal = {
+        title: "Sin receta",
+        description: "Toca para sugerir o agregar una receta.",
+        prepTimeMinutes: 0,
+        ingredients: [],
+        steps: [],
+        healthyTip: ""
+      };
+
+      if (!plan || !plan.days || plan.days.length === 0) {
+        plan = {
+          title: 'Plan Personalizado',
+          days: ['Lunes', 'Martes', 'Miércoles'].map(day => ({
+            dayName: day,
+            breakfast: { ...emptyMeal },
+            lunch: { ...emptyMeal },
+            snack: { ...emptyMeal },
+            dinner: { ...emptyMeal }
+          }))
+        };
+      }
+
+      // Check if day exists
+      let dayObj = plan.days.find(d => d.dayName.toLowerCase() === targetDay.toLowerCase());
+      if (!dayObj) {
+        dayObj = {
+          dayName: targetDay,
+          breakfast: { ...emptyMeal },
+          lunch: { ...emptyMeal },
+          snack: { ...emptyMeal },
+          dinner: { ...emptyMeal }
+        };
+        plan.days.push(dayObj);
+      }
+
+      // Safe check for other meal types on the day object so it doesn't crash WeeklyPlannerPage
+      if (!dayObj.breakfast) dayObj.breakfast = { ...emptyMeal };
+      if (!dayObj.lunch) dayObj.lunch = { ...emptyMeal };
+      if (!dayObj.snack) dayObj.snack = { ...emptyMeal };
+      if (!dayObj.dinner) dayObj.dinner = { ...emptyMeal };
+
+      dayObj[targetMeal] = {
+        title: selectedRecipeForPlan.title,
+        description: selectedRecipeForPlan.description || '',
+        prepTimeMinutes: selectedRecipeForPlan.prepTimeMinutes || 15,
+        ingredients: selectedRecipeForPlan.ingredients || [],
+        steps: selectedRecipeForPlan.steps || [],
+        healthyTip: selectedRecipeForPlan.tips ? selectedRecipeForPlan.tips[0] : ''
+      };
+
+      try {
+        await api.saveWeeklyPlan(plan);
+      } catch (err) {
+        // save offline fallback only
+      }
+      localStorage.setItem('loop_weekly_plan', JSON.stringify(plan));
+
+      const mealLabel = targetMeal === 'breakfast' ? 'Desayuno' : targetMeal === 'lunch' ? 'Almuerzo' : targetMeal === 'snack' ? 'Merienda' : 'Cena';
+      addToast(`¡Receta agregada al plan del ${targetDay} (${mealLabel})!`, 'success');
+      setShowAddToPlannerModal(false);
+      setSelectedRecipeForPlan(null);
+    } catch (error) {
+      console.error(error);
+      addToast('Error al agregar al planificador.', 'error');
     }
   };
 
@@ -226,6 +339,16 @@ export const SmartRecipesPage = () => {
                     🍳 Cocinar Receta
                   </button>
                   <button
+                    onClick={() => {
+                      setSelectedRecipeForPlan(recipe);
+                      setShowAddToPlannerModal(true);
+                    }}
+                    className="btn-brutal btn-secondary"
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  >
+                    📅 Agregar al Planificador
+                  </button>
+                  <button
                     onClick={() => addToast('¡Receta guardada en tus favoritos!', 'success')}
                     className="btn-brutal btn-secondary"
                     style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
@@ -238,6 +361,77 @@ export const SmartRecipesPage = () => {
           </div>
         )}
       </div>
+
+      {/* Modal Agregar al Planificador */}
+      {showAddToPlannerModal && selectedRecipeForPlan && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '16px'
+        }} className="animate-fade-in">
+          <div className="card-brutal animate-slide-up" style={{ backgroundColor: 'var(--color-cream)', maxWidth: '400px', width: '100%', padding: '24px' }}>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: '8px' }}>📅 Agregar a mi Plan</h3>
+            <p style={{ color: 'var(--color-gray-text)', fontSize: '0.85rem', marginBottom: '16px' }}>
+              Elige el día y la comida donde quieres planificar <strong>{selectedRecipeForPlan.title}</strong>:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, marginBottom: '4px' }}>Día de la semana:</label>
+                <select
+                  value={targetDay}
+                  onChange={(e) => setTargetDay(e.target.value)}
+                  className="input-brutal"
+                  style={{ width: '100%', padding: '8px' }}
+                >
+                  <option value="Lunes">Lunes</option>
+                  <option value="Martes">Martes</option>
+                  <option value="Miércoles">Miércoles</option>
+                  <option value="Jueves">Jueves</option>
+                  <option value="Viernes">Viernes</option>
+                  <option value="Sábado">Sábado</option>
+                  <option value="Domingo">Domingo</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, marginBottom: '4px' }}>Tipo de comida:</label>
+                <select
+                  value={targetMeal}
+                  onChange={(e) => setTargetMeal(e.target.value)}
+                  className="input-brutal"
+                  style={{ width: '100%', padding: '8px' }}
+                >
+                  <option value="breakfast">🍳 Desayuno</option>
+                  <option value="lunch">🥗 Almuerzo</option>
+                  <option value="snack">🍎 Merienda</option>
+                  <option value="dinner">🍲 Cena</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={handleAddToPlannerConfirm}
+                className="btn-brutal"
+                style={{ flex: 1, padding: '10px', fontSize: '0.85rem', backgroundColor: 'var(--color-lime)' }}
+              >
+                Confirmar
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddToPlannerModal(false);
+                  setSelectedRecipeForPlan(null);
+                }}
+                className="btn-brutal btn-secondary"
+                style={{ padding: '10px 16px', fontSize: '0.85rem' }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

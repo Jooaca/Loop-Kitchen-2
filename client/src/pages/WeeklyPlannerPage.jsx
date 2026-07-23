@@ -18,7 +18,10 @@ export const WeeklyPlannerPage = () => {
     mainGoal: 'Comer saludable y ahorrar dinero'
   });
 
-  const [mealPlan, setMealPlan] = useState(null);
+  const [mealPlan, setMealPlan] = useState(() => {
+    const saved = localStorage.getItem('loop_weekly_plan');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(false);
   const [generatingList, setGeneratingList] = useState(false);
   const [activeDay, setActiveDay] = useState('Lunes');
@@ -26,14 +29,33 @@ export const WeeklyPlannerPage = () => {
   const { addToast } = useToast();
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const res = await api.getActiveMealPlan();
+        if (res.success && res.mealPlan) {
+          setMealPlan(res.mealPlan);
+          localStorage.setItem('loop_weekly_plan', JSON.stringify(res.mealPlan));
+          if (res.mealPlan.days && res.mealPlan.days.length > 0) {
+            setActiveDay(res.mealPlan.days[0].dayName);
+          }
+        }
+      } catch (err) {
+        // Fallback to localStorage state is already in state init
+      }
+    };
+    fetchPlan();
+  }, []);
+
   const handleGeneratePlan = async () => {
     setLoading(true);
     try {
       const res = await api.generateWeeklyPlan(preferences);
       if (res.success) {
         setMealPlan(res.mealPlan);
+        localStorage.setItem('loop_weekly_plan', JSON.stringify(res.mealPlan));
         setActiveDay(res.mealPlan.days[0]?.dayName || 'Lunes');
-        addToast('¡Plan Semanal de 7 días variado generado!', 'success');
+        addToast('¡Plan Semanal de 3 días variado generado!', 'success');
       } else {
         addToast(res.message || 'Error al generar plan semanal', 'error');
       }

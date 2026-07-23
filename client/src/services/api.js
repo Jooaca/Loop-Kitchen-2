@@ -131,6 +131,22 @@ export const api = {
     return res.json();
   },
 
+  getActiveMealPlan: async () => {
+    const res = await fetch(`${API_BASE_URL}/ai/weekly-planner`, {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  saveWeeklyPlan: async (mealPlan) => {
+    const res = await fetch(`${API_BASE_URL}/ai/weekly-planner/save`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ mealPlan }),
+    });
+    return res.json();
+  },
+
   generateGroceryFromPlan: async () => {
     const res = await fetch(`${API_BASE_URL}/ai/generate-grocery-from-plan`, {
       method: 'POST',
