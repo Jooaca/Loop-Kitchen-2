@@ -119,7 +119,8 @@ export const WeeklyPlannerPage = () => {
   };
 
   return (
-    <div style={{ padding: '20px 16px' }} className="animate-fade-in">
+    <>
+      <div style={{ padding: '20px 16px' }} className="animate-fade-in">
       {/* Title & Badge Header */}
       <div style={{ marginBottom: '20px' }}>
         <div className="badge badge-dark" style={{ marginBottom: '6px' }}>
@@ -290,6 +291,7 @@ export const WeeklyPlannerPage = () => {
           </div>
         </div>
       )}
+      </div>
 
       {/* MODAL DETALLE DE RECETA MOBILE */}
       {selectedRecipe && (
@@ -413,6 +415,6 @@ export const WeeklyPlannerPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

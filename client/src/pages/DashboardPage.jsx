@@ -88,7 +88,8 @@ export const DashboardPage = () => {
   };
 
   return (
-    <div style={{ padding: '20px 16px' }} className="animate-fade-in">
+    <>
+      <div style={{ padding: '20px 16px' }} className="animate-fade-in">
       {/* Welcome Banner */}
       <div className="card-brutal" style={{ backgroundColor: 'var(--color-lime)', padding: '20px', marginBottom: '20px' }}>
         <div className="badge badge-dark" style={{ marginBottom: '8px' }}>Dashboard Loop Kitchen</div>
@@ -247,6 +248,7 @@ export const DashboardPage = () => {
           </Link>
         </div>
       </div>
+      </div>
 
       {/* MODAL DETALLE DE RECETA MOBILE DESDE EL INICIO */}
       {selectedRecipe && (
@@ -374,6 +376,6 @@ export const DashboardPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
