@@ -78,17 +78,20 @@ Formato JSON exacto:
   const aiResult = await callStudentProxy(prompt, systemInstruction, 'flash');
   if (aiResult && Array.isArray(aiResult)) return aiResult;
 
-  return [
+  if (aiResult && Array.isArray(aiResult)) return aiResult;
+
+  // Dynamic backup recipes search when AI rate limit is reached
+  const localRecipes = [
     {
       title: 'Pollo Saltado con Cebolla y Tomate',
       description: 'Plato tradicional rápido y lleno de sabor.',
       prepTimeMinutes: 20,
       difficulty: 'Fácil',
       ingredients: [
-        { name: 'Pollo', quantity: 300, unit: 'g', inPantry: true },
-        { name: 'Tomate', quantity: 2, unit: 'unid', inPantry: true },
-        { name: 'Cebolla', quantity: 1, unit: 'unid', inPantry: true },
-        { name: 'Aceite de Oliva', quantity: 1, unit: 'cda', inPantry: true }
+        { name: 'Pollo', quantity: 300, unit: 'g' },
+        { name: 'Tomate', quantity: 2, unit: 'unid' },
+        { name: 'Cebolla', quantity: 1, unit: 'unid' },
+        { name: 'Aceite de oliva', quantity: 1, unit: 'cda' }
       ],
       steps: [
         'Cortar el pollo en tiras finas y sazonar con sal y pimienta.',
@@ -106,9 +109,9 @@ Formato JSON exacto:
       prepTimeMinutes: 25,
       difficulty: 'Fácil',
       ingredients: [
-        { name: 'Arroz', quantity: 200, unit: 'g', inPantry: true },
-        { name: 'Queso', quantity: 100, unit: 'g', inPantry: true },
-        { name: 'Espinaca', quantity: 1, unit: 'atado', inPantry: true }
+        { name: 'Arroz', quantity: 200, unit: 'g' },
+        { name: 'Queso', quantity: 100, unit: 'g' },
+        { name: 'Espinaca', quantity: 1, unit: 'atado' }
       ],
       steps: [
         'Cocinar el arroz de manera tradicional.',
@@ -118,8 +121,124 @@ Formato JSON exacto:
       nutritionalInfo: { calories: 390, protein: 16, carbs: 50, fats: 14 },
       healthyVariants: ['Reemplazar con arroz integral.'],
       tips: ['Servir de inmediato para disfrutar el queso fundido.']
+    },
+    {
+      title: 'Fajitas de Pollo y Verduras',
+      description: 'Wraps rápidos y sabrosos con pollo y pimientos.',
+      prepTimeMinutes: 15,
+      difficulty: 'Fácil',
+      ingredients: [
+        { name: 'Pollo', quantity: 300, unit: 'g' },
+        { name: 'Cebolla', quantity: 1, unit: 'unid' },
+        { name: 'Pimiento', quantity: 1, unit: 'unid' },
+        { name: 'Harina', quantity: 150, unit: 'g' }
+      ],
+      steps: [
+        'Saltear el pollo cortado en tiras junto con las cebollas y pimientos.',
+        'Preparar tortillas rápidas con harina y agua, rellenar y servir.'
+      ],
+      nutritionalInfo: { calories: 450, protein: 32, carbs: 40, fats: 15 },
+      healthyVariants: ['Usar harina integral para las tortillas.'],
+      tips: ['Puedes sazonar con limón y comino para realzar el sabor.']
+    },
+    {
+      title: 'Tortilla de Huevo y Queso',
+      description: 'Un desayuno o cena proteica súper rápida.',
+      prepTimeMinutes: 10,
+      difficulty: 'Fácil',
+      ingredients: [
+        { name: 'Huevo', quantity: 3, unit: 'unid' },
+        { name: 'Queso', quantity: 80, unit: 'g' },
+        { name: 'Aceite de oliva', quantity: 1, unit: 'cda' }
+      ],
+      steps: [
+        'Batir los huevos con una pizca de sal.',
+        'Cocinar en sartén con aceite a fuego bajo, colocar queso en el medio y doblar.'
+      ],
+      nutritionalInfo: { calories: 320, protein: 22, carbs: 2, fats: 25 },
+      healthyVariants: ['Agregar claras de huevo y espinaca fresca.'],
+      tips: ['Cocinar a fuego lento para que el queso se derrita sin quemar el huevo.']
+    },
+    {
+      title: 'Bananas con Chocolate Culinario',
+      description: 'Un postre o merienda dulce e inteligente.',
+      prepTimeMinutes: 8,
+      difficulty: 'Fácil',
+      ingredients: [
+        { name: 'Banana', quantity: 2, unit: 'unid' },
+        { name: 'Chocolate', quantity: 50, unit: 'g' },
+        { name: 'Harina', quantity: 50, unit: 'g' }
+      ],
+      steps: [
+        'Cortar las bananas al medio y espolvorear con una lluvia fina de harina.',
+        'Derretir el chocolate a baño maría y bañar las bananas.'
+      ],
+      nutritionalInfo: { calories: 280, protein: 4, carbs: 48, fats: 8 },
+      healthyVariants: ['Usar chocolate negro con cacao al 70% o superior.'],
+      tips: ['Puedes refrigerar las bananas un rato antes de bañarlas.']
+    },
+    {
+      title: 'Panqueques de Harina y Huevo',
+      description: 'Dulces o salados, perfectos para acompañar con fruta.',
+      prepTimeMinutes: 12,
+      difficulty: 'Fácil',
+      ingredients: [
+        { name: 'Harina', quantity: 100, unit: 'g' },
+        { name: 'Huevo', quantity: 1, unit: 'unid' },
+        { name: 'Leche', quantity: 150, unit: 'ml' }
+      ],
+      steps: [
+        'Batir la harina, el huevo y la leche hasta formar una mezcla líquida homogénea.',
+        'Cocinar porciones delgadas en una sartén caliente vuelta y vuelta.'
+      ],
+      nutritionalInfo: { calories: 250, protein: 9, carbs: 38, fats: 5 },
+      healthyVariants: ['Usar avena molida en lugar de harina refinada.'],
+      tips: ['Untar con queso crema o miel para un toque extra dulce.']
+    },
+    {
+      title: 'Ensalada de Atún y Cebolla Rápida',
+      description: 'Ensalada fresca repleta de proteínas y omega 3.',
+      prepTimeMinutes: 10,
+      difficulty: 'Fácil',
+      ingredients: [
+        { name: 'Atún', quantity: 1, unit: 'lata' },
+        { name: 'Cebolla', quantity: 0.5, unit: 'unid' },
+        { name: 'Tomate', quantity: 1, unit: 'unid' }
+      ],
+      steps: [
+        'Escurrir la lata de atún y colocar en un bowl.',
+        'Picar la cebolla y el tomate finamente, mezclar y condimentar con sal y aceite.'
+      ],
+      nutritionalInfo: { calories: 210, protein: 26, carbs: 8, fats: 9 },
+      healthyVariants: ['Usar atún al agua para reducir calorías.'],
+      tips: ['Añadir unas gotas de jugo de limón fresco.']
     }
   ];
+
+  // Algoritmo de emparejamiento inteligente de recetas locales basado en stock de despensa
+  const matchedRecipes = localRecipes.map(recipe => {
+    let matchCount = 0;
+    const ingredientsWithInPantry = recipe.ingredients.map(ing => {
+      const inPantry = pantryItems.some(p => 
+        p && p.name && (
+          p.name.toLowerCase().includes(ing.name.toLowerCase()) || 
+          ing.name.toLowerCase().includes(p.name.toLowerCase())
+        )
+      );
+      if (inPantry) matchCount++;
+      return { ...ing, inPantry };
+    });
+    return { ...recipe, ingredients: ingredientsWithInPantry, matchCount };
+  });
+
+  // Ordenar de mayor a menor cantidad de ingredientes coincidentes
+  matchedRecipes.sort((a, b) => b.matchCount - a.matchCount);
+
+  // Devolver las 2 mejores coincidencias
+  return matchedRecipes.slice(0, 2).map(r => {
+    const { matchCount, ...rest } = r;
+    return rest;
+  });
 };
 
 /**
