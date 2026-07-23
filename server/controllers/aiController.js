@@ -160,18 +160,117 @@ const generateWeeklyPlan = async (req, res) => {
 // @route POST /api/ai/generate-grocery-from-plan
 const generateGroceryFromPlan = async (req, res) => {
   try {
-    const groceryItems = [
-      { name: 'Avena en hojuelas', category: 'Granos', quantity: 1, unit: 'kg', isBought: false },
-      { name: 'Pechuga de Pollo', category: 'Proteínas', quantity: 2, unit: 'kg', isBought: false },
-      { name: 'Yogurt Griego', category: 'Lácteos', quantity: 4, unit: 'unid', isBought: false },
-      { name: 'Fillete de Pescado', category: 'Proteínas', quantity: 1, unit: 'kg', isBought: false },
-      { name: 'Ensalada Verde Mix', category: 'Verduras', quantity: 2, unit: 'paq', isBought: false }
-    ];
+    // 1. Get user active meal plan
+    let plan = null;
+    try {
+      plan = await MealPlan.findOne({ user: req.user.id, isActive: true });
+    } catch (e) {
+      plan = inMemoryMealPlans.get(req.user.id);
+    }
+
+    if (!plan || !plan.days || plan.days.length === 0) {
+      return res.status(400).json({ success: false, message: 'No tienes un plan semanal activo. Por favor genera uno primero.' });
+    }
+
+    // 2. Extract and consolidate ingredients from all meals of all days
+    const requiredIngredients = new Map();
+
+    plan.days.forEach(day => {
+      ['breakfast', 'lunch', 'snack', 'dinner'].forEach(mealType => {
+        const meal = day[mealType];
+        if (meal && Array.isArray(meal.ingredients)) {
+          meal.ingredients.forEach(ing => {
+            if (!ing || !ing.name) return;
+            const name = ing.name.trim().toLowerCase();
+            const quantity = Number(ing.quantity) || 0;
+            const unit = (ing.unit || 'unid').toLowerCase();
+
+            if (name) {
+              const key = `${name}_${unit}`;
+              if (requiredIngredients.has(key)) {
+                const existing = requiredIngredients.get(key);
+                existing.quantity += quantity;
+              } else {
+                requiredIngredients.set(key, {
+                  name: ing.name.trim(),
+                  quantity,
+                  unit: ing.unit || 'unid',
+                  category: ing.category || 'General'
+                });
+              }
+            }
+          });
+        }
+      });
+    });
+
+    // 3. Fetch current user pantry stock to deduct what they already have
+    let pantryItems = [];
+    try {
+      const pantry = await Pantry.findOne({ user: req.user.id });
+      pantryItems = pantry ? pantry.items : [];
+    } catch (e) {
+      const pantryController = require('./pantryController');
+      if (pantryController.inMemoryPantries && pantryController.inMemoryPantries.has(req.user.id)) {
+        pantryItems = pantryController.inMemoryPantries.get(req.user.id);
+      }
+    }
+
+    // Map pantry items for fast case-insensitive lookup
+    const pantryMap = new Map();
+    pantryItems.forEach(item => {
+      const name = item.name.trim().toLowerCase();
+      const unit = (item.unit || 'unid').toLowerCase();
+      const key = `${name}_${unit}`;
+      pantryMap.set(key, (Number(item.quantity) || 0));
+    });
+
+    // 4. Subtract pantry stock and create final grocery list
+    const groceryItems = [];
+    requiredIngredients.forEach((ing, key) => {
+      let neededQty = ing.quantity;
+      if (pantryMap.has(key)) {
+        neededQty -= pantryMap.get(key);
+      }
+
+      if (neededQty > 0) {
+        groceryItems.push({
+          name: ing.name,
+          category: ing.category,
+          quantity: neededQty,
+          unit: ing.unit,
+          isBought: false
+        });
+      }
+    });
+
+    // 5. Save the generated grocery list as active grocery list
+    const groceryController = require('./groceryController');
+    let list;
+    try {
+      list = await GroceryList.findOne({ user: req.user.id, status: 'active' });
+      if (!list) {
+        list = new GroceryList({ user: req.user.id });
+      }
+      list.title = 'Lista del Plan Semanal';
+      list.items = groceryItems;
+      list.aiOptimizationNote = 'Generada a partir de los ingredientes de tu menú semanal, restando los que ya tienes en la alacena.';
+      await list.save();
+    } catch (e) {
+      list = {
+        title: 'Lista del Plan Semanal',
+        items: groceryItems.map((it, idx) => ({ _id: 'g_' + idx + '_' + Date.now(), ...it })),
+        aiOptimizationNote: 'Generada a partir de los ingredientes de tu menú semanal (Caché Offline).'
+      };
+      if (groceryController.inMemoryGrocery) {
+        groceryController.inMemoryGrocery.set(req.user.id, list);
+      }
+    }
 
     res.json({
       success: true,
-      message: '¡Lista generada con éxito! Se restaron los ítems disponibles en tu despensa.',
-      groceryList: { title: 'Lista del Plan Semanal', items: groceryItems }
+      message: '¡Lista de compras generada con éxito a partir de tu menú! Se descontaron los ingredientes disponibles en tu despensa.',
+      groceryList: list
     });
   } catch (error) {
     console.error('Generate Grocery from Plan error:', error);

@@ -134,4 +134,4 @@ const toggleBoughtItem = async (req, res) => {
   }
 };
 
-module.exports = { getGroceryList, saveGroceryList, toggleBoughtItem };
+module.exports = { getGroceryList, saveGroceryList, toggleBoughtItem, inMemoryGrocery };

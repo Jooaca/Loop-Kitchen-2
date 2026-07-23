@@ -160,19 +160,20 @@ JSON requerido:
  * 3. Asistente de Planificación Semanal IA ⭐ (7 Días Variados con Receta Completa)
  */
 const generateWeeklyMealPlan = async (preferences = {}) => {
-  const systemInstruction = 'Nutricionista y Chef de Loop Kitchen. Genera un menú de 3 días (Lunes a Miércoles) en JSON minificado.';
+  const systemInstruction = 'Nutricionista y Chef de Loop Kitchen. Genera un menú inteligente de 2 días (Lunes y Martes) en JSON minificado. El menú debe ser inteligente, planificando platos que compartan/reutilicen ingredientes comunes a lo largo de los días para ahorrar costos y evitar desperdicio.';
 
   const prompt = `
-Genera un plan de 3 Días (Lunes, Martes, Miércoles) en JSON de tamaño mínimo para evitar truncación.
+Genera un plan de 2 Días (Lunes, Martes) en JSON de tamaño mínimo para evitar truncación.
 IMPORTANTE:
 - "description": Máximo 2 palabras.
 - "ingredients": Máximo 1 ingrediente por comida (incluyendo solo "name", "quantity" y "unit", omitir el campo "category").
+- REUTILIZACIÓN: Diseña las comidas de forma inteligente para que se repitan/reutilicen ingredientes comunes de un día a otro (por ejemplo: si usas "Pollo" el lunes en el almuerzo, reutilízalo el martes; si usas "Tomate", úsalo en varias comidas).
 - "steps": Dejar como array vacío [] para todas las comidas.
 - "healthyTip": Dejar como string vacío "".
 
 Formato JSON exacto:
 {
-  "title": "Plan 3 Dias",
+  "title": "Plan 2 Dias",
   "days": [
     {
       "dayName": "Lunes",
@@ -223,7 +224,7 @@ Formato JSON exacto:
 
   const aiResult = await callStudentProxy(prompt, systemInstruction, 'flash');
 
-  if (aiResult && aiResult.days && aiResult.days.length >= 3) {
+  if (aiResult && aiResult.days && aiResult.days.length >= 2) {
     return aiResult;
   }
 
