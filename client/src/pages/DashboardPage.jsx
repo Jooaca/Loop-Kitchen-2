@@ -355,7 +355,7 @@ export const DashboardPage = () => {
                 className="btn-brutal"
                 style={{ flex: 1, minWidth: '120px', padding: '10px', fontSize: '0.85rem', backgroundColor: 'var(--color-lime)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
               >
-                🍳 Cocinar
+                🍳 Cocinar receta
               </button>
               <button
                 onClick={() => {
@@ -368,7 +368,7 @@ export const DashboardPage = () => {
                 <Heart size={14} /> Guardar
               </button>
               <button onClick={handleCloseRecipeModal} className="btn-brutal btn-secondary" style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
-                Cerrar
+                Volver para atrás
               </button>
             </div>
           </div>
