@@ -152,7 +152,7 @@ export const WeeklyPlannerPage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontWeight: 700, fontSize: '0.75rem', marginBottom: '4px' }}>Presupuesto ($)</label>
+            <label style={{ display: 'block', fontWeight: 700, fontSize: '0.75rem', marginBottom: '4px' }}>Presupuesto ($U)</label>
             <input
               type="number"
               min="20"
