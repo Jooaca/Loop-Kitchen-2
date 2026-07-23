@@ -32,12 +32,23 @@ export const WeeklyPlannerPage = () => {
   React.useEffect(() => {
     const fetchPlan = async () => {
       try {
-        const res = await api.getActiveMealPlan();
-        if (res.success && res.mealPlan) {
-          setMealPlan(res.mealPlan);
-          localStorage.setItem('loop_weekly_plan', JSON.stringify(res.mealPlan));
-          if (res.mealPlan.days && res.mealPlan.days.length > 0) {
-            setActiveDay(res.mealPlan.days[0].dayName);
+        const saved = localStorage.getItem('loop_weekly_plan');
+        if (!saved) {
+          const res = await api.getActiveMealPlan();
+          if (res.success && res.mealPlan) {
+            setMealPlan(res.mealPlan);
+            localStorage.setItem('loop_weekly_plan', JSON.stringify(res.mealPlan));
+            if (res.mealPlan.days && res.mealPlan.days.length > 0) {
+              setActiveDay(res.mealPlan.days[0].dayName);
+            }
+          }
+        } else {
+          const parsed = JSON.parse(saved);
+          if (parsed.days && parsed.days.length > 0) {
+            const hasActive = parsed.days.some(d => d.dayName === activeDay);
+            if (!hasActive) {
+              setActiveDay(parsed.days[0].dayName);
+            }
           }
         }
       } catch (err) {
@@ -85,6 +96,7 @@ export const WeeklyPlannerPage = () => {
   };
 
   const handleOpenRecipeModal = (meal, mealType) => {
+    if (!meal) return;
     setSelectedRecipe({ ...meal, mealType });
   };
 
@@ -196,60 +208,68 @@ export const WeeklyPlannerPage = () => {
             .map((day) => (
               <div key={day.dayName} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {/* Desayuno */}
-                <div
-                  className="card-brutal"
-                  onClick={() => handleOpenRecipeModal(day.breakfast, 'Desayuno')}
-                  style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span className="badge badge-lime">🍳 Desayuno</span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-lime-dark)' }}>Ver Receta 📖</span>
+                {day.breakfast && (
+                  <div
+                    className="card-brutal"
+                    onClick={() => handleOpenRecipeModal(day.breakfast, 'Desayuno')}
+                    style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span className="badge badge-lime">🍳 Desayuno</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-lime-dark)' }}>Ver Receta 📖</span>
+                    </div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.breakfast.title || 'Sin receta'}</h3>
+                    <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.breakfast.description || 'No hay descripción'}</p>
                   </div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.breakfast.title}</h3>
-                  <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.breakfast.description}</p>
-                </div>
+                )}
 
                 {/* Almuerzo */}
-                <div
-                  className="card-brutal"
-                  onClick={() => handleOpenRecipeModal(day.lunch, 'Almuerzo')}
-                  style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span className="badge badge-coral">🥗 Almuerzo</span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-coral)' }}>Ver Receta 📖</span>
+                {day.lunch && (
+                  <div
+                    className="card-brutal"
+                    onClick={() => handleOpenRecipeModal(day.lunch, 'Almuerzo')}
+                    style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span className="badge badge-coral">🥗 Almuerzo</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-coral)' }}>Ver Receta 📖</span>
+                    </div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.lunch.title || 'Sin receta'}</h3>
+                    <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.lunch.description || 'No hay descripción'}</p>
                   </div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.lunch.title}</h3>
-                  <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.lunch.description}</p>
-                </div>
+                )}
 
                 {/* Merienda */}
-                <div
-                  className="card-brutal"
-                  onClick={() => handleOpenRecipeModal(day.snack, 'Merienda')}
-                  style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span className="badge badge-blue">🍎 Merienda</span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-blue)' }}>Ver Receta 📖</span>
+                {day.snack && (
+                  <div
+                    className="card-brutal"
+                    onClick={() => handleOpenRecipeModal(day.snack, 'Merienda')}
+                    style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span className="badge badge-blue">🍎 Merienda</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-blue)' }}>Ver Receta 📖</span>
+                    </div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.snack.title || 'Sin receta'}</h3>
+                    <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.snack.description || 'No hay descripción'}</p>
                   </div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.snack.title}</h3>
-                  <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.snack.description}</p>
-                </div>
+                )}
 
                 {/* Cena */}
-                <div
-                  className="card-brutal"
-                  onClick={() => handleOpenRecipeModal(day.dinner, 'Cena')}
-                  style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span className="badge badge-dark">🍲 Cena</span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-lime)' }}>Ver Receta 📖</span>
+                {day.dinner && (
+                  <div
+                    className="card-brutal"
+                    onClick={() => handleOpenRecipeModal(day.dinner, 'Cena')}
+                    style={{ backgroundColor: 'var(--color-white)', cursor: 'pointer', padding: '14px' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span className="badge badge-dark">🍲 Cena</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-lime)' }}>Ver Receta 📖</span>
+                    </div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.dinner.title || 'Sin receta'}</h3>
+                    <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.dinner.description || 'No hay descripción'}</p>
                   </div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{day.dinner.title}</h3>
-                  <p style={{ color: 'var(--color-gray-text)', fontSize: '0.8rem' }}>{day.dinner.description}</p>
-                </div>
+                )}
               </div>
             ))}
 
