@@ -287,51 +287,53 @@ IMPORTANTE:
 - "description": Máximo 2 palabras.
 - "ingredients": Máximo 1 ingrediente por comida (incluyendo solo "name", "quantity" y "unit", omitir el campo "category").
 - REUTILIZACIÓN: Diseña las comidas de forma inteligente para que se repitan/reutilicen ingredientes comunes de un día a otro (por ejemplo: si usas "Pollo" el lunes en el almuerzo, reutilízalo el martes; si usas "Tomate", úsalo en varias comidas).
+- VARIACIÓN: Sé creativo y no repitas platos de ejemplo. Genera desayunos, almuerzos, meriendas y cenas saludables y diversas.
 - "steps": Dejar como array vacío [] para todas las comidas.
 - "healthyTip": Dejar como string vacío "".
+- Semilla de variedad aleatoria: ${Math.random()}
 
-Formato JSON exacto:
+Formato JSON requerido:
 {
-  "title": "Plan 2 Dias",
+  "title": "Plan Variado e Inteligente",
   "days": [
     {
       "dayName": "Lunes",
       "breakfast": {
-        "title": "Avena",
+        "title": "Nombre creativo de desayuno (ej: Panqueques de avena, Huevos revueltos, etc.)",
         "description": "Desayuno",
-        "prepTimeMinutes": 5,
+        "prepTimeMinutes": 10,
         "ingredients": [
-          { "name": "Avena", "quantity": 50, "unit": "g" }
+          { "name": "Ingrediente principal", "quantity": 50, "unit": "g" }
         ],
         "steps": [],
         "healthyTip": ""
       },
       "lunch": {
-        "title": "Pollo",
+        "title": "Nombre creativo de almuerzo (ej: Fajitas de pollo, Ensalada de quinoa, etc.)",
         "description": "Almuerzo",
-        "prepTimeMinutes": 10,
+        "prepTimeMinutes": 20,
         "ingredients": [
-          { "name": "Pollo", "quantity": 150, "unit": "g" }
+          { "name": "Ingrediente principal", "quantity": 150, "unit": "g" }
         ],
         "steps": [],
         "healthyTip": ""
       },
       "snack": {
-        "title": "Fruta",
+        "title": "Nombre de merienda (ej: Rodajas de manzana, Yogurt con nueces, etc.)",
         "description": "Merienda",
         "prepTimeMinutes": 5,
         "ingredients": [
-          { "name": "Manzana", "quantity": 1, "unit": "unid" }
+          { "name": "Ingrediente principal", "quantity": 1, "unit": "unid" }
         ],
         "steps": [],
         "healthyTip": ""
       },
       "dinner": {
-        "title": "Sopa",
+        "title": "Nombre creativo de cena (ej: Sopa de calabaza, Omelette de espinaca, etc.)",
         "description": "Cena",
         "prepTimeMinutes": 15,
         "ingredients": [
-          { "name": "Tomate", "quantity": 2, "unit": "unid" }
+          { "name": "Ingrediente principal", "quantity": 2, "unit": "unid" }
         ],
         "steps": [],
         "healthyTip": ""
